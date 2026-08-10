@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-  "dev": "tsx watch src/server.ts",
-  "start": "node dist/server.js",
-  "build": "tsc"
+  "dev": "npx tsx watch src/server.ts",
+  "start": "npx tsx src/server.ts",
+  "build": "echo 'no build needed'"
 },
   "dependencies": {
     "@fastify/cors": "^9.0.1",
