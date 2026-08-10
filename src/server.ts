@@ -1,17 +1,25 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import { movieRoutes } from './routes/movies.js';
+import { tvRoutes } from './routes/tv.js';
+import { searchRoutes } from './routes/search.js';
+import { requestLogger } from './middleware/request-logger.js';
+import { errorHandler } from './middleware/error-handler.js';
 
 const app = Fastify({ logger: true });
+
+app.addHook('onRequest', requestLogger);
+app.setErrorHandler(errorHandler);
 
 app.register(cors, { origin: '*' });
 
 app.get('/health', async () => {
-  return { status: 'ok', service: 'ibrax-media-api' };
+  return { status: 'ok', service: 'ibrax-media-api', version: '1.0.0' };
 });
 
-app.get('/api/v1/test', async () => {
-  return { success: true, message: 'API is working!' };
-});
+app.register(movieRoutes);
+app.register(tvRoutes);
+app.register(searchRoutes);
 
 const start = async () => {
   try {
