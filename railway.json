@@ -4,7 +4,7 @@
     "buildCommand": "npm install"
   },
   "deploy": {
-    "startCommand": "npm start",
+    "startCommand": "npx tsx src/server.ts",
     "healthcheckPath": "/health",
     "restartPolicyType": "ON_FAILURE"
   }
