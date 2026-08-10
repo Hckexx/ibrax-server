@@ -13,5 +13,5 @@ export async function requestLogger(request: FastifyRequest, reply: FastifyReply
       duration: Date.now() - start,
       requestId: request.id,
     }, 'request completed');
-  });
+  }, () => {});
 }
