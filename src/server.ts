@@ -1,35 +1,25 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import rateLimit from '@fastify/rate-limit';
-import { config } from './config.js';
-import { movieRoutes } from './routes/movies.js';
-import { tvRoutes } from './routes/tv.js';
-import { searchRoutes } from './routes/search.js';
-import { errorHandler } from './middleware/error-handler.js';
-import { requestLogger } from './middleware/request-logger.js';
 
 const app = Fastify({ logger: true });
 
-app.addHook('onRequest', requestLogger);
-app.setErrorHandler(errorHandler);
-
-app.register(cors, { origin: config.cors.origins });
-app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
+app.register(cors, { origin: '*' });
 
 app.get('/health', async () => {
-  return { status: 'ok', service: 'ibrax-media-api', version: '1.0.0' };
+  return { status: 'ok', service: 'ibrax-media-api' };
 });
 
-app.register(movieRoutes);
-app.register(tvRoutes);
-app.register(searchRoutes);
+app.get('/api/v1/test', async () => {
+  return { success: true, message: 'API is working!' };
+});
 
 const start = async () => {
   try {
-    await app.listen({ port: config.port, host: '0.0.0.0' });
-    console.log(`IBRAX Media API running on http://0.0.0.0:${config.port}`);
+    const port = parseInt(process.env.PORT || '3000');
+    await app.listen({ port, host: '0.0.0.0' });
+    console.log(`Server running on port ${port}`);
   } catch (err) {
-    app.log.error(err);
+    console.error(err);
     process.exit(1);
   }
 };
