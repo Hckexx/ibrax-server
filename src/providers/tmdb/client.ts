@@ -62,6 +62,11 @@ class TMDBClient {
 
   async searchMulti(query: string, page = 1) {
     return this.request<any>('/search/multi', { query, page: page.toString() });
+ 
+  }
+
+    async getSimilar(mediaType: 'movie' | 'tv', id: number) {
+    return this.request<any>(`/${mediaType}/${id}/similar`);
   }
 }
 

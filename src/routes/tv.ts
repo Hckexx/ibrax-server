@@ -111,7 +111,7 @@ export async function tvRoutes(app: FastifyInstance) {
     }
   });
 
-    // Similar TV
+      // Similar TV
   app.get('/api/v1/tv/:id/similar', async (request, reply) => {
     const { id } = request.params as any;
     const cacheKey = `tv-similar-${id}`;
@@ -120,7 +120,7 @@ export async function tvRoutes(app: FastifyInstance) {
     if (cached) return reply.send({ success: true, data: cached });
 
     try {
-      const data = await tmdbClient.request<any>(`/tv/${id}/similar`);
+      const data = await tmdbClient.getSimilar('tv', parseInt(id));
       cache.set(cacheKey, data.results?.slice(0, 10) || [], CACHE_TTL.DETAILS);
       return reply.send({ success: true, data: data.results?.slice(0, 10) || [] });
     } catch (error: any) {

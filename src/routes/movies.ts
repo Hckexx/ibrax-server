@@ -112,7 +112,7 @@ export async function movieRoutes(app: FastifyInstance) {
     }
   });
 
-  // Similar movies
+    // Similar movies
   app.get('/api/v1/movies/:id/similar', async (request, reply) => {
     const { id } = request.params as any;
     const cacheKey = `movie-similar-${id}`;
@@ -121,7 +121,7 @@ export async function movieRoutes(app: FastifyInstance) {
     if (cached) return reply.send({ success: true, data: cached });
 
     try {
-      const data = await tmdbClient.request<any>(`/movie/${id}/similar`);
+      const data = await tmdbClient.getSimilar('movie', parseInt(id));
       cache.set(cacheKey, data.results?.slice(0, 10) || [], CACHE_TTL.DETAILS);
       return reply.send({ success: true, data: data.results?.slice(0, 10) || [] });
     } catch (error: any) {
