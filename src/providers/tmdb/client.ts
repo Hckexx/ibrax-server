@@ -72,6 +72,9 @@ class TMDBClient {
     async getVideos(mediaType: 'movie' | 'tv', id: number) {
     return this.request<any>(`/${mediaType}/${id}/videos`);
   }
+    async discover(mediaType: 'movie' | 'tv', params?: Record<string, string>) {
+    return this.request<any>(`/discover/${mediaType}`, params);
+  }
 }
 
 export const tmdbClient = new TMDBClient();

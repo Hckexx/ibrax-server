@@ -128,4 +128,25 @@ export async function movieRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+    app.get('/api/v1/discover/movies', async (request, reply) => {
+    const { genre, page: pageStr } = request.query as any;
+    const page = parseInt(pageStr || '1');
+    const cacheKey = `discover-movies-${genre || 'all'}-${page}`;
+    
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached, meta: { page } });
+
+    try {
+      const params: Record<string, string> = { page: page.toString(), sort_by: 'popularity.desc' };
+      if (genre) params.with_genres = genre;
+      
+      const data = await tmdbClient.request<any>('/discover/movie', params);
+      cache.set(cacheKey, data.results, CACHE_TTL.POPULAR);
+      return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
+    } catch (error: any) {
+      const stale = cache.get(cacheKey);
+      if (stale) return reply.send({ success: true, data: stale, meta: { page, cached: true } });
+      throw error;
+    }
+  });
 }
