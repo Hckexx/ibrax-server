@@ -129,7 +129,7 @@ export async function tvRoutes(app: FastifyInstance) {
       throw error;
     }
   });
-    app.get('/api/v1/tv/:id/videos', async (request, reply) => {
+      app.get('/api/v1/tv/:id/videos', async (request, reply) => {
     const { id } = request.params as any;
     const cacheKey = `tv-videos-${id}`;
     
@@ -137,7 +137,7 @@ export async function tvRoutes(app: FastifyInstance) {
     if (cached) return reply.send({ success: true, data: cached });
 
     try {
-      const data = await tmdbClient.request<any>(`/tv/${id}/videos`);
+      const data = await tmdbClient.getVideos('tv', parseInt(id));
       cache.set(cacheKey, data.results || [], CACHE_TTL.DETAILS);
       return reply.send({ success: true, data: data.results || [] });
     } catch (error: any) {

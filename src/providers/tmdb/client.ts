@@ -68,6 +68,10 @@ class TMDBClient {
     async getSimilar(mediaType: 'movie' | 'tv', id: number) {
     return this.request<any>(`/${mediaType}/${id}/similar`);
   }
+
+    async getVideos(mediaType: 'movie' | 'tv', id: number) {
+    return this.request<any>(`/${mediaType}/${id}/videos`);
+  }
 }
 
 export const tmdbClient = new TMDBClient();

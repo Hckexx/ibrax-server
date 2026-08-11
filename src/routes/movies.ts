@@ -119,7 +119,7 @@ export async function movieRoutes(app: FastifyInstance) {
     if (cached) return reply.send({ success: true, data: cached });
 
     try {
-      const data = await tmdbClient.request<any>(`/movie/${id}/videos`);
+      const data = await tmdbClient.getVideos('movie', parseInt(id));
       cache.set(cacheKey, data.results || [], CACHE_TTL.DETAILS);
       return reply.send({ success: true, data: data.results || [] });
     } catch (error: any) {
