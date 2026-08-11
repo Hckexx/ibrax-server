@@ -111,4 +111,21 @@ export async function movieRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+    app.get('/api/v1/movies/:id/videos', async (request, reply) => {
+    const { id } = request.params as any;
+    const cacheKey = `movie-videos-${id}`;
+    
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+
+    try {
+      const data = await tmdbClient.request<any>(`/movie/${id}/videos`);
+      cache.set(cacheKey, data.results || [], CACHE_TTL.DETAILS);
+      return reply.send({ success: true, data: data.results || [] });
+    } catch (error: any) {
+      const stale = cache.get(cacheKey);
+      if (stale) return reply.send({ success: true, data: stale, cached: true });
+      throw error;
+    }
+  });
 }
