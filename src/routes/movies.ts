@@ -140,7 +140,7 @@ export async function movieRoutes(app: FastifyInstance) {
       const params: Record<string, string> = { page: page.toString(), sort_by: 'popularity.desc' };
       if (genre) params.with_genres = genre;
       
-      const data = await tmdbClient.request<any>('/discover/movie', params);
+      const data = await tmdbClient.discover('movie', params);
       cache.set(cacheKey, data.results, CACHE_TTL.POPULAR);
       return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
     } catch (error: any) {
