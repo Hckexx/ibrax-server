@@ -92,4 +92,42 @@ export async function movieRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+
+    // Movie credits
+  app.get('/api/v1/movies/:id/credits', async (request, reply) => {
+    const { id } = request.params as any;
+    const cacheKey = `movie-credits-${id}`;
+    
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+
+    try {
+      const data = await tmdbClient.getCredits('movie', parseInt(id));
+      cache.set(cacheKey, data, CACHE_TTL.DETAILS);
+      return reply.send({ success: true, data });
+    } catch (error: any) {
+      const stale = cache.get(cacheKey);
+      if (stale) return reply.send({ success: true, data: stale, cached: true });
+      throw error;
+    }
+  });
+
+  // Similar movies
+  app.get('/api/v1/movies/:id/similar', async (request, reply) => {
+    const { id } = request.params as any;
+    const cacheKey = `movie-similar-${id}`;
+    
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+
+    try {
+      const data = await tmdbClient.request<any>(`/movie/${id}/similar`);
+      cache.set(cacheKey, data.results?.slice(0, 10) || [], CACHE_TTL.DETAILS);
+      return reply.send({ success: true, data: data.results?.slice(0, 10) || [] });
+    } catch (error: any) {
+      const stale = cache.get(cacheKey);
+      if (stale) return reply.send({ success: true, data: stale, cached: true });
+      throw error;
+    }
+  });
 }

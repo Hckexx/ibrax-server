@@ -110,4 +110,23 @@ export async function tvRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+
+    // Similar TV
+  app.get('/api/v1/tv/:id/similar', async (request, reply) => {
+    const { id } = request.params as any;
+    const cacheKey = `tv-similar-${id}`;
+    
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+
+    try {
+      const data = await tmdbClient.request<any>(`/tv/${id}/similar`);
+      cache.set(cacheKey, data.results?.slice(0, 10) || [], CACHE_TTL.DETAILS);
+      return reply.send({ success: true, data: data.results?.slice(0, 10) || [] });
+    } catch (error: any) {
+      const stale = cache.get(cacheKey);
+      if (stale) return reply.send({ success: true, data: stale, cached: true });
+      throw error;
+    }
+  });
 }
