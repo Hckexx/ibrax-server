@@ -184,4 +184,41 @@ export async function movieRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+    app.get('/api/v1/movies/genres', async (request, reply) => {
+    const cacheKey = 'movie-genres';
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+
+    try {
+      const data = await tmdbClient.getGenres('movie');
+      cache.set(cacheKey, data.genres || [], CACHE_TTL.POPULAR);
+      return reply.send({ success: true, data: data.genres || [] });
+    } catch (error: any) {
+      const stale = cache.get(cacheKey);
+      if (stale) return reply.send({ success: true, data: stale, cached: true });
+      throw error;
+    }
+  });
+
+  app.get('/api/v1/discover/movie', async (request, reply) => {
+    const { with_genres, page: pageStr } = request.query as any;
+    const page = parseInt(pageStr || '1');
+    const cacheKey = `discover-movie-${with_genres || 'all'}-${page}`;
+    
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached, meta: { page } });
+
+    try {
+      const params: Record<string, string> = { page: page.toString(), sort_by: 'popularity.desc' };
+      if (with_genres) params.with_genres = with_genres;
+      
+      const data = await tmdbClient.discover('movie', params);
+      cache.set(cacheKey, data.results, CACHE_TTL.POPULAR);
+      return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
+    } catch (error: any) {
+      const stale = cache.get(cacheKey);
+      if (stale) return reply.send({ success: true, data: stale, cached: true });
+      throw error;
+    }
+  });
 }
