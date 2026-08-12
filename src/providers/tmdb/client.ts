@@ -75,6 +75,17 @@ class TMDBClient {
     async discover(mediaType: 'movie' | 'tv', params?: Record<string, string>) {
     return this.request<any>(`/discover/${mediaType}`, params);
   }
+    async getUpcoming(page: number = 1) {
+    return this.request<any>(`/movie/upcoming`, { page: page.toString() });
+  }
+
+  async getNowPlaying(page: number = 1) {
+    return this.request<any>(`/movie/now_playing`, { page: page.toString() });
+  }
+
+  async getAiringToday(page: number = 1) {
+    return this.request<any>(`/tv/airing_today`, { page: page.toString() });
+  }
 }
 
 export const tmdbClient = new TMDBClient();

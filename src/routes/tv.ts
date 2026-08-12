@@ -146,4 +146,21 @@ export async function tvRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+    app.get('/api/v1/tv/airing-today', async (request, reply) => {
+    const page = parseInt((request.query as any).page || '1');
+    const cacheKey = `airing-today-tv-${page}`;
+    
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached, meta: { page } });
+
+    try {
+      const data = await tmdbClient.getAiringToday(page);
+      cache.set(cacheKey, data.results, CACHE_TTL.POPULAR);
+      return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
+    } catch (error: any) {
+      const stale = cache.get(cacheKey);
+      if (stale) return reply.send({ success: true, data: stale, meta: { page, cached: true } });
+      throw error;
+    }
+  });
 }

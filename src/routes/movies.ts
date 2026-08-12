@@ -149,4 +149,39 @@ export async function movieRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+    app.get('/api/v1/movies/upcoming', async (request, reply) => {
+    const page = parseInt((request.query as any).page || '1');
+    const cacheKey = `upcoming-movies-${page}`;
+    
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached, meta: { page } });
+
+    try {
+      const data = await tmdbClient.getUpcoming(page);
+      cache.set(cacheKey, data.results, CACHE_TTL.POPULAR);
+      return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
+    } catch (error: any) {
+      const stale = cache.get(cacheKey);
+      if (stale) return reply.send({ success: true, data: stale, meta: { page, cached: true } });
+      throw error;
+    }
+  });
+
+  app.get('/api/v1/movies/now-playing', async (request, reply) => {
+    const page = parseInt((request.query as any).page || '1');
+    const cacheKey = `now-playing-movies-${page}`;
+    
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached, meta: { page } });
+
+    try {
+      const data = await tmdbClient.getNowPlaying(page);
+      cache.set(cacheKey, data.results, CACHE_TTL.POPULAR);
+      return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
+    } catch (error: any) {
+      const stale = cache.get(cacheKey);
+      if (stale) return reply.send({ success: true, data: stale, meta: { page, cached: true } });
+      throw error;
+    }
+  });
 }
