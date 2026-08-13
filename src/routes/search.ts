@@ -77,4 +77,17 @@ export async function searchRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+    app.get('/api/v1/search/multi', async (request, reply) => {
+    const { query, page: pageStr } = request.query as any;
+    const page = parseInt(pageStr || '1');
+    if (!query) return reply.status(400).send({ success: false, error: { message: 'Query required' } });
+    const cacheKey = `multi-${query}-${page}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.searchMulti(query, page);
+      cache.set(cacheKey, data.results, CACHE_TTL.SEARCH);
+      return reply.send({ success: true, data: data.results });
+    } catch (e: any) { throw e; }
+  });
 }

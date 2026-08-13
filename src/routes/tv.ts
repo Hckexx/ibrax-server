@@ -200,4 +200,80 @@ export async function tvRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+    // Trending Day
+  app.get('/api/v1/trending/tv/day', async (request, reply) => {
+    const cacheKey = 'trending-tv-day';
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.getTrendingDay('tv');
+      cache.set(cacheKey, data.results, CACHE_TTL.TRENDING);
+      return reply.send({ success: true, data: data.results });
+    } catch (e: any) { throw e; }
+  });
+
+  // Recommendations
+  app.get('/api/v1/tv/:id/recommendations', async (request, reply) => {
+    const { id } = request.params as any;
+    const cacheKey = `tv-rec-${id}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.getRecommendations('tv', parseInt(id));
+      cache.set(cacheKey, data.results?.slice(0, 10) || [], CACHE_TTL.DETAILS);
+      return reply.send({ success: true, data: data.results?.slice(0, 10) || [] });
+    } catch (e: any) { throw e; }
+  });
+
+  // Reviews
+  app.get('/api/v1/tv/:id/reviews', async (request, reply) => {
+    const { id } = request.params as any;
+    const cacheKey = `tv-reviews-${id}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.getReviews('tv', parseInt(id));
+      cache.set(cacheKey, data.results || [], CACHE_TTL.DETAILS);
+      return reply.send({ success: true, data: data.results || [] });
+    } catch (e: any) { throw e; }
+  });
+
+  // Images
+  app.get('/api/v1/tv/:id/images', async (request, reply) => {
+    const { id } = request.params as any;
+    const cacheKey = `tv-images-${id}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.getImages('tv', parseInt(id));
+      cache.set(cacheKey, data, CACHE_TTL.DETAILS);
+      return reply.send({ success: true, data });
+    } catch (e: any) { throw e; }
+  });
+
+  // Episode details
+  app.get('/api/v1/tv/:id/season/:season/episode/:episode', async (request, reply) => {
+    const { id, season, episode } = request.params as any;
+    const cacheKey = `episode-${id}-${season}-${episode}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.getEpisodeDetails(parseInt(id), parseInt(season), parseInt(episode));
+      cache.set(cacheKey, data, CACHE_TTL.SEASONS);
+      return reply.send({ success: true, data });
+    } catch (e: any) { throw e; }
+  });
+
+  // Discover with filters
+  app.get('/api/v1/discover/tv/filter', async (request, reply) => {
+    const params = request.query as Record<string, string>;
+    const cacheKey = `disc-tv-filter-${JSON.stringify(params)}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.discoverWithFilters('tv', params);
+      cache.set(cacheKey, data.results, CACHE_TTL.POPULAR);
+      return reply.send({ success: true, data: data.results, meta: { totalPages: data.total_pages } });
+    } catch (e: any) { throw e; }
+  });
 }

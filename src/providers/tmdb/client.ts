@@ -97,6 +97,45 @@ class TMDBClient {
     async search(mediaType: 'movie' | 'tv', query: string, page: number = 1) {
     return this.request<any>(`/search/${mediaType}`, { query, page: page.toString() });
   }
+    async getRecommendations(mediaType: 'movie' | 'tv', id: number) {
+    return this.request<any>(`/${mediaType}/${id}/recommendations`);
+  }
+
+  async getReviews(mediaType: 'movie' | 'tv', id: number) {
+    return this.request<any>(`/${mediaType}/${id}/reviews`);
+  }
+
+  async getImages(mediaType: 'movie' | 'tv', id: number) {
+    return this.request<any>(`/${mediaType}/${id}/images`);
+  }
+
+  async getKeywords(id: number) {
+    return this.request<any>(`/movie/${id}/keywords`);
+  }
+
+  async getExternalIds(mediaType: 'movie' | 'tv', id: number) {
+    return this.request<any>(`/${mediaType}/${id}/external_ids`);
+  }
+
+  async getPerson(personId: number) {
+    return this.request<any>(`/person/${personId}`);
+  }
+
+  async getPersonCredits(personId: number, mediaType: 'movie' | 'tv') {
+    return this.request<any>(`/person/${personId}/${mediaType}_credits`);
+  }
+
+  async getEpisodeDetails(tvId: number, season: number, episode: number) {
+    return this.request<any>(`/tv/${tvId}/season/${season}/episode/${episode}`);
+  }
+
+  async getTrendingDay(mediaType: 'movie' | 'tv') {
+    return this.request<any>(`/trending/${mediaType}/day`);
+  }
+
+  async discoverWithFilters(mediaType: 'movie' | 'tv', params: Record<string, string>) {
+    return this.request<any>(`/discover/${mediaType}`, params);
+  }
 }
 
 export const tmdbClient = new TMDBClient();

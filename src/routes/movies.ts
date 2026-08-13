@@ -221,4 +221,93 @@ export async function movieRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+    // Trending Day
+  app.get('/api/v1/trending/movies/day', async (request, reply) => {
+    const cacheKey = 'trending-movies-day';
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.getTrendingDay('movie');
+      cache.set(cacheKey, data.results, CACHE_TTL.TRENDING);
+      return reply.send({ success: true, data: data.results });
+    } catch (e: any) { throw e; }
+  });
+
+  // Recommendations
+  app.get('/api/v1/movies/:id/recommendations', async (request, reply) => {
+    const { id } = request.params as any;
+    const cacheKey = `movie-rec-${id}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.getRecommendations('movie', parseInt(id));
+      cache.set(cacheKey, data.results?.slice(0, 10) || [], CACHE_TTL.DETAILS);
+      return reply.send({ success: true, data: data.results?.slice(0, 10) || [] });
+    } catch (e: any) { throw e; }
+  });
+
+  // Reviews
+  app.get('/api/v1/movies/:id/reviews', async (request, reply) => {
+    const { id } = request.params as any;
+    const cacheKey = `movie-reviews-${id}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.getReviews('movie', parseInt(id));
+      cache.set(cacheKey, data.results || [], CACHE_TTL.DETAILS);
+      return reply.send({ success: true, data: data.results || [] });
+    } catch (e: any) { throw e; }
+  });
+
+  // Images
+  app.get('/api/v1/movies/:id/images', async (request, reply) => {
+    const { id } = request.params as any;
+    const cacheKey = `movie-images-${id}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.getImages('movie', parseInt(id));
+      cache.set(cacheKey, data, CACHE_TTL.DETAILS);
+      return reply.send({ success: true, data });
+    } catch (e: any) { throw e; }
+  });
+
+  // Keywords
+  app.get('/api/v1/movies/:id/keywords', async (request, reply) => {
+    const { id } = request.params as any;
+    const cacheKey = `movie-keywords-${id}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.getKeywords(parseInt(id));
+      cache.set(cacheKey, data.keywords || data.results || [], CACHE_TTL.DETAILS);
+      return reply.send({ success: true, data: data.keywords || data.results || [] });
+    } catch (e: any) { throw e; }
+  });
+
+  // External IDs
+  app.get('/api/v1/movies/:id/external-ids', async (request, reply) => {
+    const { id } = request.params as any;
+    const cacheKey = `movie-ext-${id}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.getExternalIds('movie', parseInt(id));
+      cache.set(cacheKey, data, CACHE_TTL.DETAILS);
+      return reply.send({ success: true, data });
+    } catch (e: any) { throw e; }
+  });
+
+  // Discover with filters
+  app.get('/api/v1/discover/movie/filter', async (request, reply) => {
+    const params = request.query as Record<string, string>;
+    const cacheKey = `disc-movie-filter-${JSON.stringify(params)}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return reply.send({ success: true, data: cached });
+    try {
+      const data = await tmdbClient.discoverWithFilters('movie', params);
+      cache.set(cacheKey, data.results, CACHE_TTL.POPULAR);
+      return reply.send({ success: true, data: data.results, meta: { totalPages: data.total_pages } });
+    } catch (e: any) { throw e; }
+  });
 }

@@ -5,6 +5,7 @@ import { tvRoutes } from './routes/tv.js';
 import { searchRoutes } from './routes/search.js';
 import { requestLogger } from './middleware/request-logger.js';
 import { errorHandler } from './middleware/error-handler.js';
+import { personRoutes } from './routes/person.js';
 
 const app = Fastify({ logger: true });
 
@@ -20,6 +21,7 @@ app.get('/health', async () => {
 app.register(movieRoutes);
 app.register(tvRoutes);
 app.register(searchRoutes);
+app.register(personRoutes);
 
 const start = async () => {
   try {
