@@ -15,7 +15,7 @@ export async function tvRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data.results, CACHE_TTL.TRENDING);
       return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, meta: { page, cached: true } });
       throw error;
     }
@@ -33,7 +33,7 @@ export async function tvRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data.results, CACHE_TTL.POPULAR);
       return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, meta: { page, cached: true } });
       throw error;
     }
@@ -51,7 +51,7 @@ export async function tvRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data.results, CACHE_TTL.TOP_RATED);
       return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, meta: { page, cached: true } });
       throw error;
     }
@@ -69,7 +69,7 @@ export async function tvRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data, CACHE_TTL.DETAILS);
       return reply.send({ success: true, data });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, cached: true });
       throw error;
     }
@@ -87,7 +87,7 @@ export async function tvRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data, CACHE_TTL.DETAILS);
       return reply.send({ success: true, data });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, cached: true });
       throw error;
     }
@@ -105,7 +105,7 @@ export async function tvRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data, CACHE_TTL.SEASONS);
       return reply.send({ success: true, data });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, cached: true });
       throw error;
     }
@@ -124,7 +124,7 @@ export async function tvRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data.results?.slice(0, 10) || [], CACHE_TTL.DETAILS);
       return reply.send({ success: true, data: data.results?.slice(0, 10) || [] });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, cached: true });
       throw error;
     }
@@ -141,7 +141,7 @@ export async function tvRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data.results || [], CACHE_TTL.DETAILS);
       return reply.send({ success: true, data: data.results || [] });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, cached: true });
       throw error;
     }
@@ -158,7 +158,7 @@ export async function tvRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data.results, CACHE_TTL.POPULAR);
       return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, meta: { page, cached: true } });
       throw error;
     }
@@ -173,7 +173,7 @@ export async function tvRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data.genres || [], CACHE_TTL.POPULAR);
       return reply.send({ success: true, data: data.genres || [] });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, cached: true });
       throw error;
     }
@@ -195,7 +195,7 @@ export async function tvRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data.results, CACHE_TTL.POPULAR);
       return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, cached: true });
       throw error;
     }

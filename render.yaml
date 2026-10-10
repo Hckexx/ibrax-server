@@ -1,0 +1,14 @@
+# Optional: Render blueprint. You can also just set the same values in the dashboard.
+services:
+  - type: web
+    name: ibrax-server
+    runtime: node
+    plan: free
+    buildCommand: npm install --include=dev
+    startCommand: npx tsx src/server.ts
+    healthCheckPath: /health
+    envVars:
+      - key: TMDB_API_TOKEN
+        sync: false        # paste your TMDB v4 "API Read Access Token" in the dashboard
+      - key: NODE_VERSION
+        value: "22"

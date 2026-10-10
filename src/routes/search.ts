@@ -24,7 +24,7 @@ export async function searchRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data.results, CACHE_TTL.SEARCH);
       return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, meta: { page, cached: true } });
       throw error;
     }
@@ -48,7 +48,7 @@ export async function searchRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data.results, CACHE_TTL.SEARCH);
       return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, cached: true });
       throw error;
     }
@@ -72,7 +72,7 @@ export async function searchRoutes(app: FastifyInstance) {
       cache.set(cacheKey, data.results, CACHE_TTL.SEARCH);
       return reply.send({ success: true, data: data.results, meta: { page, totalPages: data.total_pages } });
     } catch (error: any) {
-      const stale = cache.get(cacheKey);
+      const stale = cache.peek(cacheKey);
       if (stale) return reply.send({ success: true, data: stale, cached: true });
       throw error;
     }
