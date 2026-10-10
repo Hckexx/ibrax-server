@@ -38,6 +38,23 @@ Differences when AniList answers:
 2. Wrap calls in `cached(key, ttl, fetcher)` from `src/cache/cached.ts` (gives you request coalescing + stale-on-error).
 3. Register a route file in `src/server.ts`.
 
+## MAL -> TMDB (v1.3)
+
+`GET /api/v1/anime/:malId/tmdb?episode=N` tells the app which TMDB title, season and episode to stream.
+
+```json
+{ "success": true, "data": { "tmdbId": 1429, "mediaType": "tv", "season": 2, "episode": 1, "title": "Attack on Titan", "source": "mapping" } }
+```
+Errors (`success:false`): `NO_MAPPING` 404, `LOW_CONFIDENCE` 404, `EPISODE_OUT_OF_RANGE` 404, `MAPPING_UNAVAILABLE` 503 (list still loading), `TMDB_UNAVAILABLE` 502.
+
+How it stays safe:
+1. The MAL -> TMDB pairs come from the community `Fribb/anime-lists` dataset (loaded at boot, refreshed daily). No title searching.
+2. Every pairing is checked: the TMDB name/original name must resemble the MAL title (or the Japanese title) and the years must not conflict. A failed check returns `LOW_CONFIDENCE` and is logged (`anime mapping rejected`) so you can fix it.
+3. A known season is trusted; an episode past its end is "out of range", never guessed into another season. Absolute numbering is only used when the dataset has no season for that entry.
+4. `data/anime-overrides.json` (project root) beats everything: add `"<malId>": { "tmdbId": 63926, "mediaType": "tv", "season": 1 }` and redeploy. Optional `episodeOffset` and `"absolute": true`.
+
+Env: `ANIME_MAP_URL` overrides the dataset URL.
+
 ## Operations
 - `GET /health` shows uptime, cache size and whether `TMDB_API_TOKEN` is set.
 - `npx tsx scripts/smoke.ts https://your-service.onrender.com` checks every important endpoint.

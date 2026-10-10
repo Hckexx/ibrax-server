@@ -1,0 +1,4 @@
+{
+  "_readme": "Manual fixes. Key = MAL id. An override beats the automatic mapping and skips the title check. Fields: tmdbId (required), mediaType ('tv' or 'movie'), season (TMDB season), episodeOffset (added to the MAL episode number inside that season, can be negative), absolute (true = treat the MAL episode as an absolute number across all TMDB seasons).",
+  "_example": { "21": { "tmdbId": 37854, "mediaType": "tv", "absolute": true } }
+}

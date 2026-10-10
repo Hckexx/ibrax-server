@@ -4,6 +4,7 @@ import { CACHE_TTL } from '../cache/cache.service.js';
 import { UpstreamError } from '../providers/jikan/client.js';
 import { animeClient } from '../providers/anime/index.js';
 import type { JikanPage } from '../providers/jikan/types.js';
+import { MappingError, resolveAnimePlayback } from '../providers/anime-map/resolve.js';
 
 const SEASONS = new Set(['winter', 'spring', 'summer', 'fall']);
 const DAYS = new Set(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'other', 'unknown']);
@@ -31,6 +32,22 @@ export async function animeRoutes(app: FastifyInstance) {
         ...(result.stale ? { stale: true } : {}),
       },
     });
+
+  // ---------- MAL -> TMDB (used by the app's Play button) ----------
+  app.get('/api/v1/anime/:id/tmdb', async (request, reply) => {
+    const id = parseInt((request.params as any).id, 10);
+    if (!Number.isInteger(id) || id <= 0) return bad(reply, 'INVALID_ID', 'Anime id must be a positive integer');
+    const episode = intParam((request.query as any).episode, 1, 1, 5000);
+    try {
+      const result = await cached(`anime-tmdb-${id}-${episode}`, CACHE_TTL.ANIME_DETAILS, () => resolveAnimePlayback(id, episode));
+      return reply.send({ success: true, data: result.data });
+    } catch (error) {
+      if (error instanceof MappingError) {
+        return reply.status(error.status).send({ success: false, error: { code: error.code, message: error.message } });
+      }
+      throw error;
+    }
+  });
 
   // ---------- home rows ----------
   app.get('/api/v1/anime/airing', async (request, reply) => {

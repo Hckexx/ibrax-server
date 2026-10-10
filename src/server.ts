@@ -9,6 +9,7 @@ import { personRoutes } from './routes/person.js';
 import { animeRoutes } from './routes/anime.js';
 import { cache } from './cache/cache.service.js';
 import { warmCache } from './warmup.js';
+import { loadAnimeMap, mappingStatus } from './providers/anime-map/list.js';
 
 const app = Fastify({ logger: true });
 
@@ -21,13 +22,14 @@ app.get('/health', async () => {
   return {
     status: 'ok',
     service: 'ibrax-media-api',
-    version: '1.2.0',
+    version: '1.3.0',
     uptimeSeconds: Math.round(process.uptime()),
     cacheEntries: cache.size,
     // Tells you at a glance if the Render env var is missing (never prints the token itself).
     tmdbTokenConfigured: Boolean(process.env.TMDB_API_TOKEN),
     features: ['movies', 'tv', 'search', 'person', 'anime'],
     animeSources: ['jikan', 'anilist'],
+    animeMap: mappingStatus(),
   };
 });
 
@@ -44,6 +46,7 @@ const start = async () => {
     console.log(`Server running on port ${port}`);
     // Fill the cache in the background so the first user after a cold start is not waiting on TMDB/Jikan.
     void warmCache(app.log);
+    void loadAnimeMap(app.log);
   } catch (err) {
     console.error(err);
     process.exit(1);
