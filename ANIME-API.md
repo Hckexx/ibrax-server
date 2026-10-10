@@ -1,4 +1,4 @@
-# Anime API (Jikan / MyAnimeList)
+# Anime API (Jikan / MyAnimeList, with AniList backup)
 
 All routes are under `/api/v1/anime` and return `{ success, data, meta? }`.
 Responses are normalised (`malId`, `title`, `posterUrl`, `genres[]`, ...), cached in memory, and served
@@ -20,6 +20,18 @@ Jikan's rate limit, no matter how many phones are connected.
 | `GET /anime/:malId` | full details |
 | `GET /anime/:malId/episodes` | all episodes; `?page=1` for one page of 100 |
 | `GET /anime/:malId/recommendations` | |
+
+## AniList backup (v1.2)
+
+Jikan is the primary source. If it is unreachable or returns a 5xx, the server answers from AniList instead
+and stops trying Jikan for 2 minutes (circuit breaker), so requests stay fast. 404/400 from Jikan are real
+answers and are never retried on AniList. `GET /health` lists `animeSources`.
+
+Differences when AniList answers:
+- Only titles that have a MAL id are returned, so every `malId` still works with the players.
+- Adult titles (isAdult / Hentai / Ecchi) are dropped.
+- Episode lists are generated (1..N); no per-episode titles, filler or recap flags.
+- Scores come from AniList (`averageScore / 10`) and can differ slightly from MAL.
 
 ## Adding another source later
 1. Create `src/providers/<name>/client.ts` that returns the same normalised shapes.

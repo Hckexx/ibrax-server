@@ -21,12 +21,13 @@ app.get('/health', async () => {
   return {
     status: 'ok',
     service: 'ibrax-media-api',
-    version: '1.1.0',
+    version: '1.2.0',
     uptimeSeconds: Math.round(process.uptime()),
     cacheEntries: cache.size,
     // Tells you at a glance if the Render env var is missing (never prints the token itself).
     tmdbTokenConfigured: Boolean(process.env.TMDB_API_TOKEN),
     features: ['movies', 'tv', 'search', 'person', 'anime'],
+    animeSources: ['jikan', 'anilist'],
   };
 });
 

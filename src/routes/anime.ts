@@ -1,7 +1,8 @@
 import { FastifyInstance, FastifyReply } from 'fastify';
 import { cached } from '../cache/cached.js';
 import { CACHE_TTL } from '../cache/cache.service.js';
-import { jikanClient, UpstreamError } from '../providers/jikan/client.js';
+import { UpstreamError } from '../providers/jikan/client.js';
+import { animeClient } from '../providers/anime/index.js';
 import type { JikanPage } from '../providers/jikan/types.js';
 
 const SEASONS = new Set(['winter', 'spring', 'summer', 'fall']);
@@ -34,7 +35,7 @@ export async function animeRoutes(app: FastifyInstance) {
   // ---------- home rows ----------
   app.get('/api/v1/anime/airing', async (request, reply) => {
     const page = intParam((request.query as any).page, 1, 1, 50);
-    return sendPage(reply, await cached(`anime-airing-${page}`, CACHE_TTL.ANIME_AIRING, () => jikanClient.top({ filter: 'airing', page })));
+    return sendPage(reply, await cached(`anime-airing-${page}`, CACHE_TTL.ANIME_AIRING, () => animeClient.top({ filter: 'airing', page })));
   });
 
   app.get('/api/v1/anime/top', async (request, reply) => {
@@ -42,22 +43,22 @@ export async function animeRoutes(app: FastifyInstance) {
     const page = intParam(q.page, 1, 1, 50);
     const filter = TOP_FILTERS.has(q.filter) ? q.filter : undefined;
     const type = TOP_TYPES.has(q.type) ? q.type : undefined;
-    return sendPage(reply, await cached(`anime-top-${filter || 'all'}-${type || 'all'}-${page}`, CACHE_TTL.ANIME_LISTS, () => jikanClient.top({ filter, type, page })));
+    return sendPage(reply, await cached(`anime-top-${filter || 'all'}-${type || 'all'}-${page}`, CACHE_TTL.ANIME_LISTS, () => animeClient.top({ filter, type, page })));
   });
 
   app.get('/api/v1/anime/popular', async (request, reply) => {
     const page = intParam((request.query as any).page, 1, 1, 50);
-    return sendPage(reply, await cached(`anime-popular-${page}`, CACHE_TTL.ANIME_LISTS, () => jikanClient.top({ filter: 'bypopularity', page })));
+    return sendPage(reply, await cached(`anime-popular-${page}`, CACHE_TTL.ANIME_LISTS, () => animeClient.top({ filter: 'bypopularity', page })));
   });
 
   app.get('/api/v1/anime/upcoming', async (request, reply) => {
     const page = intParam((request.query as any).page, 1, 1, 50);
-    return sendPage(reply, await cached(`anime-upcoming-${page}`, CACHE_TTL.ANIME_LISTS, () => jikanClient.upcoming(page)));
+    return sendPage(reply, await cached(`anime-upcoming-${page}`, CACHE_TTL.ANIME_LISTS, () => animeClient.upcoming(page)));
   });
 
   app.get('/api/v1/anime/season/now', async (request, reply) => {
     const page = intParam((request.query as any).page, 1, 1, 50);
-    return sendPage(reply, await cached(`anime-season-now-${page}`, CACHE_TTL.ANIME_AIRING, () => jikanClient.seasonNow(page)));
+    return sendPage(reply, await cached(`anime-season-now-${page}`, CACHE_TTL.ANIME_AIRING, () => animeClient.seasonNow(page)));
   });
 
   app.get('/api/v1/anime/season/:year/:season', async (request, reply) => {
@@ -66,7 +67,7 @@ export async function animeRoutes(app: FastifyInstance) {
     if (!Number.isInteger(y) || y < 1960 || y > 2100) return bad(reply, 'INVALID_YEAR', 'Year must be between 1960 and 2100');
     if (!SEASONS.has(season)) return bad(reply, 'INVALID_SEASON', 'Season must be winter, spring, summer or fall');
     const page = intParam((request.query as any).page, 1, 1, 50);
-    return sendPage(reply, await cached(`anime-season-${y}-${season}-${page}`, CACHE_TTL.ANIME_LISTS, () => jikanClient.season(y, season, page)));
+    return sendPage(reply, await cached(`anime-season-${y}-${season}-${page}`, CACHE_TTL.ANIME_LISTS, () => animeClient.season(y, season, page)));
   });
 
   app.get('/api/v1/anime/schedule', async (request, reply) => {
@@ -74,7 +75,7 @@ export async function animeRoutes(app: FastifyInstance) {
     const day = String(q.day || '').toLowerCase() || ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][new Date().getUTCDay()];
     if (!DAYS.has(day)) return bad(reply, 'INVALID_DAY', 'Day must be a weekday name');
     const page = intParam(q.page, 1, 1, 20);
-    return sendPage(reply, await cached(`anime-schedule-${day}-${page}`, CACHE_TTL.ANIME_AIRING, () => jikanClient.schedule(day, page)));
+    return sendPage(reply, await cached(`anime-schedule-${day}-${page}`, CACHE_TTL.ANIME_AIRING, () => animeClient.schedule(day, page)));
   });
 
   /**
@@ -87,11 +88,11 @@ export async function animeRoutes(app: FastifyInstance) {
     const season = m <= 1 || m === 11 ? 'winter' : m <= 4 ? 'spring' : m <= 7 ? 'summer' : 'fall';
 
     const rows = {
-      airing: () => cached('anime-airing-1', CACHE_TTL.ANIME_AIRING, () => jikanClient.top({ filter: 'airing', page: 1 })),
-      season: () => cached(`anime-season-${year}-${season}-1`, CACHE_TTL.ANIME_LISTS, () => jikanClient.season(year, season, 1)),
-      top: () => cached('anime-top-all-all-1', CACHE_TTL.ANIME_LISTS, () => jikanClient.top({ page: 1 })),
-      popular: () => cached('anime-popular-1', CACHE_TTL.ANIME_LISTS, () => jikanClient.top({ filter: 'bypopularity', page: 1 })),
-      upcoming: () => cached('anime-upcoming-1', CACHE_TTL.ANIME_LISTS, () => jikanClient.upcoming(1)),
+      airing: () => cached('anime-airing-1', CACHE_TTL.ANIME_AIRING, () => animeClient.top({ filter: 'airing', page: 1 })),
+      season: () => cached(`anime-season-${year}-${season}-1`, CACHE_TTL.ANIME_LISTS, () => animeClient.season(year, season, 1)),
+      top: () => cached('anime-top-all-all-1', CACHE_TTL.ANIME_LISTS, () => animeClient.top({ page: 1 })),
+      popular: () => cached('anime-popular-1', CACHE_TTL.ANIME_LISTS, () => animeClient.top({ filter: 'bypopularity', page: 1 })),
+      upcoming: () => cached('anime-upcoming-1', CACHE_TTL.ANIME_LISTS, () => animeClient.upcoming(1)),
     };
 
     const data: Record<string, unknown> = {};
@@ -116,12 +117,13 @@ export async function animeRoutes(app: FastifyInstance) {
     const q = request.query as any;
     const query = String(q.query || q.q || '').trim();
     if (!query) return bad(reply, 'INVALID_QUERY', 'Query parameter is required');
+    if (query.length > 100) return bad(reply, 'INVALID_QUERY', 'Query is too long (max 100 characters)');
     const page = intParam(q.page, 1, 1, 20);
-    return sendPage(reply, await cached(`anime-search-${query.toLowerCase()}-${page}`, CACHE_TTL.ANIME_SEARCH, () => jikanClient.search(query, page)));
+    return sendPage(reply, await cached(`anime-search-${query.toLowerCase()}-${page}`, CACHE_TTL.ANIME_SEARCH, () => animeClient.search(query, page)));
   });
 
   app.get('/api/v1/anime/genres', async (_request, reply) => {
-    const { data } = await cached('anime-genres', CACHE_TTL.ANIME_DETAILS, () => jikanClient.genres());
+    const { data } = await cached('anime-genres', CACHE_TTL.ANIME_DETAILS, () => animeClient.genres());
     return reply.send({ success: true, data });
   });
 
@@ -129,12 +131,12 @@ export async function animeRoutes(app: FastifyInstance) {
     const id = parseInt((request.params as any).id, 10);
     if (!Number.isInteger(id) || id <= 0) return bad(reply, 'INVALID_GENRE', 'Genre id must be a number');
     const page = intParam((request.query as any).page, 1, 1, 50);
-    return sendPage(reply, await cached(`anime-genre-${id}-${page}`, CACHE_TTL.ANIME_LISTS, () => jikanClient.byGenre(id, page)));
+    return sendPage(reply, await cached(`anime-genre-${id}-${page}`, CACHE_TTL.ANIME_LISTS, () => animeClient.byGenre(id, page)));
   });
 
   app.get('/api/v1/anime/random', async (_request, reply) => {
     // Not cached on purpose - every call should be a different title.
-    return reply.send({ success: true, data: await jikanClient.random() });
+    return reply.send({ success: true, data: await animeClient.random() });
   });
 
   // ---------- single title ----------
@@ -142,7 +144,7 @@ export async function animeRoutes(app: FastifyInstance) {
 
   app.get(`/api/v1/anime/:malId${MAL_ID}`, async (request, reply) => {
     const id = parseInt((request.params as any).malId, 10);
-    const { data, stale } = await cached(`anime-${id}`, CACHE_TTL.ANIME_DETAILS, () => jikanClient.details(id));
+    const { data, stale } = await cached(`anime-${id}`, CACHE_TTL.ANIME_DETAILS, () => animeClient.details(id));
     return reply.send({ success: true, data, ...(stale ? { meta: { stale: true } } : {}) });
   });
 
@@ -153,17 +155,17 @@ export async function animeRoutes(app: FastifyInstance) {
     // ?page=N returns just that page (100 episodes). Without it, the full list is returned.
     if (q.page !== undefined) {
       const page = intParam(q.page, 1, 1, 50);
-      const { data, stale } = await cached(`anime-eps-${id}-p${page}`, CACHE_TTL.ANIME_EPISODES, () => jikanClient.episodesPage(id, page));
+      const { data, stale } = await cached(`anime-eps-${id}-p${page}`, CACHE_TTL.ANIME_EPISODES, () => animeClient.episodesPage(id, page));
       return reply.send({ success: true, data: data.items, meta: { page, hasNextPage: data.hasNextPage, ...(stale ? { stale: true } : {}) } });
     }
 
-    const { data, stale } = await cached(`anime-eps-${id}`, CACHE_TTL.ANIME_EPISODES, () => jikanClient.allEpisodes(id));
+    const { data, stale } = await cached(`anime-eps-${id}`, CACHE_TTL.ANIME_EPISODES, () => animeClient.allEpisodes(id));
     return reply.send({ success: true, data, meta: { total: data.length, ...(stale ? { stale: true } : {}) } });
   });
 
   app.get(`/api/v1/anime/:malId${MAL_ID}/recommendations`, async (request, reply) => {
     const id = parseInt((request.params as any).malId, 10);
-    const { data } = await cached(`anime-rec-${id}`, CACHE_TTL.ANIME_DETAILS, () => jikanClient.recommendations(id));
+    const { data } = await cached(`anime-rec-${id}`, CACHE_TTL.ANIME_DETAILS, () => animeClient.recommendations(id));
     return reply.send({ success: true, data });
   });
 }

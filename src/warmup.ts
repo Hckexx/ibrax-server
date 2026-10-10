@@ -2,7 +2,7 @@ import { FastifyBaseLogger } from 'fastify';
 import { cached } from './cache/cached.js';
 import { CACHE_TTL } from './cache/cache.service.js';
 import { tmdbClient } from './providers/tmdb/client.js';
-import { jikanClient } from './providers/jikan/client.js';
+import { animeClient } from './providers/anime/index.js';
 
 /**
  * Runs once after boot. Failures are only logged - warming is a nice-to-have.
@@ -26,10 +26,10 @@ export async function warmCache(log: FastifyBaseLogger) {
   }
 
   const animeJobs: Array<[string, number, () => Promise<any>]> = [
-    ['anime-airing-1', CACHE_TTL.ANIME_AIRING, () => jikanClient.top({ filter: 'airing', page: 1 })],
-    ['anime-top-all-all-1', CACHE_TTL.ANIME_LISTS, () => jikanClient.top({ page: 1 })],
-    ['anime-popular-1', CACHE_TTL.ANIME_LISTS, () => jikanClient.top({ filter: 'bypopularity', page: 1 })],
-    ['anime-upcoming-1', CACHE_TTL.ANIME_LISTS, () => jikanClient.upcoming(1)],
+    ['anime-airing-1', CACHE_TTL.ANIME_AIRING, () => animeClient.top({ filter: 'airing', page: 1 })],
+    ['anime-top-all-all-1', CACHE_TTL.ANIME_LISTS, () => animeClient.top({ page: 1 })],
+    ['anime-popular-1', CACHE_TTL.ANIME_LISTS, () => animeClient.top({ filter: 'bypopularity', page: 1 })],
+    ['anime-upcoming-1', CACHE_TTL.ANIME_LISTS, () => animeClient.upcoming(1)],
   ];
   for (const [key, ttlMs, load] of animeJobs) {
     try {
