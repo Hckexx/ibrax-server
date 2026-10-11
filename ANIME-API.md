@@ -60,3 +60,8 @@ Env: `ANIME_MAP_URL` overrides the dataset URL.
 - `npx tsx scripts/smoke.ts https://your-service.onrender.com` checks every important endpoint.
 - Render's free plan sleeps after ~15 min without traffic. Ping `/health` every 5-10 minutes with a free
   uptime monitor (UptimeRobot, cron-job.org) to avoid slow first loads.
+
+
+## Mapping diagnostics (v1.4)
+`GET /health` -> `animeMap` shows `entries`, `source` (`bundled` or the URL used), `lastError`, per-URL `attempts`, and `skipped` (rows ignored and why).
+If `entries` is 0, read `lastError`/`attempts`. For a guaranteed start, put a copy of the list at `data/anime-list-mini.json` (see `data/README.md`).

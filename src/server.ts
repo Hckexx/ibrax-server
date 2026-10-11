@@ -9,7 +9,8 @@ import { personRoutes } from './routes/person.js';
 import { animeRoutes } from './routes/anime.js';
 import { cache } from './cache/cache.service.js';
 import { warmCache } from './warmup.js';
-import { loadAnimeMap, mappingStatus } from './providers/anime-map/list.js';
+import rateLimit from '@fastify/rate-limit';
+import { loadAnimeMap, loadBundledMap, mappingStatus } from './providers/anime-map/list.js';
 
 const app = Fastify({ logger: true });
 
@@ -17,12 +18,22 @@ app.addHook('onRequest', requestLogger);
 app.setErrorHandler(errorHandler);
 
 app.register(cors, { origin: '*' });
+// Per-IP limit: generous for real use, stops one client from burning the TMDB/Jikan quota.
+app.register(rateLimit, {
+  max: 300,
+  timeWindow: '1 minute',
+  allowList: (req) => req.url === '/health',
+  errorResponseBuilder: () => ({
+    success: false,
+    error: { code: 'RATE_LIMITED', message: 'Too many requests. Slow down for a moment.' },
+  }),
+});
 
 app.get('/health', async () => {
   return {
     status: 'ok',
     service: 'ibrax-media-api',
-    version: '1.3.0',
+    version: '1.4.0',
     uptimeSeconds: Math.round(process.uptime()),
     cacheEntries: cache.size,
     // Tells you at a glance if the Render env var is missing (never prints the token itself).
@@ -46,6 +57,8 @@ const start = async () => {
     console.log(`Server running on port ${port}`);
     // Fill the cache in the background so the first user after a cold start is not waiting on TMDB/Jikan.
     void warmCache(app.log);
+    // Bundled copy first (instant), then refresh from the network in the background.
+    loadBundledMap(app.log);
     void loadAnimeMap(app.log);
   } catch (err) {
     console.error(err);

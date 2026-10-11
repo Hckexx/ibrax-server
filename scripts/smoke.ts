@@ -17,6 +17,9 @@ const checks: Array<{ name: string; path: string; expect: (json: any) => boolean
   { name: 'anime details (Frieren 52991)', path: '/api/v1/anime/52991', expect: (j) => j.data?.malId === 52991 },
   { name: 'anime episodes', path: '/api/v1/anime/52991/episodes', expect: (j) => Array.isArray(j.data) && j.data.length > 0 },
   { name: 'anime search', path: '/api/v1/anime/search?query=naruto', expect: (j) => Array.isArray(j.data) && j.data.length > 0 },
+  { name: 'anime mapping loaded', path: '/health', expect: (j) => (j.animeMap?.entries ?? 0) > 1000 },
+  { name: 'map One Piece -> TMDB 37854', path: '/api/v1/anime/21/tmdb?episode=1', expect: (j) => j.data?.tmdbId === 37854 },
+  { name: 'map Naruto -> TMDB 46260', path: '/api/v1/anime/20/tmdb?episode=1', expect: (j) => j.data?.tmdbId === 46260 },
   { name: 'anime genres', path: '/api/v1/anime/genres', expect: (j) => Array.isArray(j.data) && j.data.length > 0 },
 ];
 
