@@ -35,9 +35,25 @@ let lastAttemptAt = 0;
 let attempts: Array<{ url: string; result: string }> = [];
 let timer: ReturnType<typeof setTimeout> | null = null;
 
-const toInt = (value: unknown): number | undefined => {
-  const n = typeof value === 'string' ? parseInt(value, 10) : typeof value === 'number' ? value : NaN;
-  return Number.isInteger(n) && n > 0 ? n : undefined;
+/** Reads an id from a number, "123", "123,456", [123], or { any: 123 } (the dataset has used several shapes). */
+const toInt = (value: unknown, depth = 0): number | undefined => {
+  if (typeof value === 'number') return Number.isInteger(value) && value > 0 ? value : undefined;
+  if (typeof value === 'string') {
+    const n = parseInt(value.trim(), 10);
+    return Number.isInteger(n) && n > 0 ? n : undefined;
+  }
+  if (depth < 2 && Array.isArray(value)) {
+    for (const v of value) {
+      const n = toInt(v, depth + 1);
+      if (n !== undefined) return n;
+    }
+  } else if (depth < 2 && value && typeof value === 'object') {
+    for (const v of Object.values(value as object)) {
+      const n = toInt(v, depth + 1);
+      if (n !== undefined) return n;
+    }
+  }
+  return undefined;
 };
 
 /** Tolerant of the dataset's field names changing between versions. Counts why rows were skipped. */
@@ -120,7 +136,11 @@ function describeEmpty(json: unknown, size: number, skips: Record<string, number
   const list = Array.isArray(json) ? json : (json && typeof json === 'object' ? Object.values(json as object).find(Array.isArray) : undefined);
   const first = Array.isArray(list) ? list.find((r) => r && typeof r === 'object') : undefined;
   const keys = first ? Object.keys(first as object).join(',') : 'none';
-  return `list has no usable TMDB ids (${size} usable; skipped ${JSON.stringify(skips)}; row fields: ${keys})`;
+  const withMal = Array.isArray(list)
+    ? list.find((r) => r && typeof r === 'object' && (r as Record<string, unknown>).mal_id !== undefined && (r as Record<string, unknown>).themoviedb_id !== undefined)
+    : undefined;
+  const sample = JSON.stringify(withMal ?? first ?? null).slice(0, 300);
+  return `list has no usable TMDB ids (${size} usable; skipped ${JSON.stringify(skips)}; row fields: ${keys}; sample row: ${sample})`;
 }
 
 async function tryUrl(url: string, log: Logger): Promise<void> {

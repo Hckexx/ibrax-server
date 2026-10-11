@@ -33,7 +33,7 @@ app.get('/health', async () => {
   return {
     status: 'ok',
     service: 'ibrax-media-api',
-    version: '1.4.1',
+    version: '1.4.2',
     uptimeSeconds: Math.round(process.uptime()),
     cacheEntries: cache.size,
     // Tells you at a glance if the Render env var is missing (never prints the token itself).
