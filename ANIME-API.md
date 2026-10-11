@@ -64,4 +64,4 @@ Env: `ANIME_MAP_URL` overrides the dataset URL.
 
 ## Mapping diagnostics (v1.4)
 `GET /health` -> `animeMap` shows `entries`, `source` (`bundled` or the URL used), `lastError`, per-URL `attempts`, and `skipped` (rows ignored and why).
-If `entries` is 0, read `lastError`/`attempts`. For a guaranteed start, put a copy of the list at `data/anime-list-mini.json` (see `data/README.md`).
+If `entries` is 0, read `lastError`/`attempts`. For a guaranteed start, put a copy of the list at `data/anime-list-full.json` (see `data/README.md`).

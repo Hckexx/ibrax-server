@@ -15,12 +15,12 @@ export type MapEntry = {
 
 /** Tried in order. The CDN mirrors cover GitHub raw being slow or blocked. Override with ANIME_MAP_URL. */
 const DEFAULT_URLS = [
-  'https://raw.githubusercontent.com/Fribb/anime-lists/master/anime-list-mini.json',
-  'https://raw.githubusercontent.com/Fribb/anime-lists/main/anime-list-mini.json',
-  'https://cdn.jsdelivr.net/gh/Fribb/anime-lists@master/anime-list-mini.json',
-  'https://fastly.jsdelivr.net/gh/Fribb/anime-lists@master/anime-list-mini.json',
+  'https://raw.githubusercontent.com/Fribb/anime-lists/master/anime-list-full.json',
+  'https://cdn.jsdelivr.net/gh/Fribb/anime-lists@master/anime-list-full.json',
+  'https://fastly.jsdelivr.net/gh/Fribb/anime-lists@master/anime-list-full.json',
 ];
-const BUNDLED_FILE = 'data/anime-list-mini.json';
+// "full" carries the TMDB ids; the "mini" file does not.
+const BUNDLED_FILES = ['data/anime-list-full.json', 'data/anime-list-mini.json'];
 const REFRESH_MS = 24 * 60 * 60 * 1000;
 const RETRY_MS = 3 * 60 * 1000;
 const TIMEOUT_MS = 60_000;
@@ -97,17 +97,30 @@ function accept(parsed: Map<number, MapEntry>, skips: Record<string, number>, fr
 
 /** Instant start: use the copy shipped in the repo (if any) so the mapping works before any download. */
 export function loadBundledMap(log: Logger): boolean {
-  try {
-    const path = join(process.cwd(), BUNDLED_FILE);
-    if (!existsSync(path)) return false;
-    const skips: Record<string, number> = {};
-    accept(parseMapList(JSON.parse(readFileSync(path, 'utf8')), skips), skips, 'bundled', log);
-    return true;
-  } catch (error) {
-    log.warn({ message: (error as Error).message }, 'bundled anime mapping unusable');
-    attempts.push({ url: BUNDLED_FILE, result: (error as Error).message });
-    return false;
+  for (const file of BUNDLED_FILES) {
+    try {
+      const path = join(process.cwd(), file);
+      if (!existsSync(path)) continue;
+      const skips: Record<string, number> = {};
+      const json = JSON.parse(readFileSync(path, 'utf8'));
+      const parsed = parseMapList(json, skips);
+      if (parsed.size < MIN_ENTRIES) throw new Error(describeEmpty(json, parsed.size, skips));
+      accept(parsed, skips, 'bundled', log);
+      return true;
+    } catch (error) {
+      log.warn({ file, message: (error as Error).message }, 'bundled anime mapping unusable');
+      attempts.push({ url: file, result: (error as Error).message });
+    }
   }
+  return false;
+}
+
+/** When a list parses to nothing, say which fields its rows actually have, so the cause is obvious. */
+function describeEmpty(json: unknown, size: number, skips: Record<string, number>): string {
+  const list = Array.isArray(json) ? json : (json && typeof json === 'object' ? Object.values(json as object).find(Array.isArray) : undefined);
+  const first = Array.isArray(list) ? list.find((r) => r && typeof r === 'object') : undefined;
+  const keys = first ? Object.keys(first as object).join(',') : 'none';
+  return `list has no usable TMDB ids (${size} usable; skipped ${JSON.stringify(skips)}; row fields: ${keys})`;
 }
 
 async function tryUrl(url: string, log: Logger): Promise<void> {
@@ -117,7 +130,10 @@ async function tryUrl(url: string, log: Logger): Promise<void> {
     const response = await fetch(url, { signal: controller.signal, headers: { 'user-agent': 'ibrax-media-api' } });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const skips: Record<string, number> = {};
-    accept(parseMapList(await response.json(), skips), skips, url, log);
+    const json = await response.json();
+    const parsed = parseMapList(json, skips);
+    if (parsed.size < MIN_ENTRIES) throw new Error(describeEmpty(json, parsed.size, skips));
+    accept(parsed, skips, url, log);
     attempts.push({ url, result: 'ok' });
   } catch (error) {
     const e = error as Error & { cause?: { code?: string; message?: string; errors?: Array<{ code?: string }> } };
